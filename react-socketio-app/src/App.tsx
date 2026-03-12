@@ -1,18 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { initSocket, getSocket, disconnectSocket } from "./services/socket";
 import "../../theme/theme.css";
 import "./App.css";
 
+const STORAGE_KEY = "chat_username";
+
 function App() {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored || "";
+  });
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const hasAutoConnectedRef = useRef(false);
+
+  // Auto-connect if stored username exists on mount
+  useEffect(() => {
+    const storedUsername = localStorage.getItem(STORAGE_KEY);
+    if (storedUsername && !hasAutoConnectedRef.current) {
+      hasAutoConnectedRef.current = true;
+      if (!getSocket()) {
+        const socket = initSocket(storedUsername, "react");
+        socket.on("connect", () => {
+          setIsConnected(true);
+          console.log("✅ Connected to backend! Socket ID:", socket.id);
+        });
+        socket.on("disconnect", () => {
+          setIsConnected(false);
+          console.log("❌ Disconnected from backend");
+        });
+        socket.on("connect_error", (error: Error) => {
+          setIsConnected(false);
+          console.error("🔴 Connection error:", error);
+        });
+        socket.on("message", (data: string) => {
+          setMessages((prev) => [...prev, data]);
+        });
+      }
+    }
+  }, []);
 
   const handleConnect = () => {
     if (!username.trim()) return;
     if (getSocket()) return; // Already initialized
+
+    // Save username to local storage
+    localStorage.setItem(STORAGE_KEY, username);
 
     const socket = initSocket(username, "react");
 
@@ -49,7 +84,7 @@ function App() {
     if (e.key === "Enter") {
       if (isConnected) {
         handleSendMessage();
-      } else {
+      } else if (username.trim()) {
         handleConnect();
       }
     }
@@ -64,6 +99,7 @@ function App() {
     setIsConnected(false);
     setMessages([]);
     setUsername("");
+    localStorage.removeItem(STORAGE_KEY);
     setShowDisconnectModal(false);
   };
 
