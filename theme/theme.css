@@ -1,0 +1,47 @@
+:root {
+  /* Colors */
+  --color-background: #f0f0f0;
+  --color-surface: white;
+  --color-border: #333;
+  --color-border-light: #ccc;
+  --color-primary: #007bff;
+  --color-primary-hover: #0056b3;
+  --color-danger: #dc3545;
+  --color-danger-hover: #c82333;
+  --color-secondary: #6c757d;
+  --color-secondary-hover: #5a6268;
+  --color-success: #d4edda;
+  --color-success-text: #155724;
+  --color-error: #f8d7da;
+  --color-error-text: #721c24;
+  --color-messages-area: #fafafa;
+  --color-placeholder: #999;
+  --color-disabled: #ccc;
+  --color-modal-overlay: rgba(0, 0, 0, 0.5);
+  --color-text: white;
+
+  /* Border radius */
+  --border-radius-sm: 5px;
+  --border-radius-md: 10px;
+
+  /* Border widths */
+  --border-width-thin: 1px;
+  --border-width-thick: 2px;
+
+  /* Padding */
+  --padding-xs: 8px;
+  --padding-sm: 10px;
+  --padding-md: 16px;
+  --padding-lg: 20px;
+  --padding-xl: 30px;
+
+  /* Box shadows */
+  --shadow-default: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Dimensions */
+  --chat-box-width: 400px;
+  --chat-box-height: 500px;
+
+  /* Transitions */
+  --transition-default: all 0.2s ease-in-out;
+}

@@ -11,17 +11,6 @@ const isConnectDisabled = computed(
   () => !username.value.trim() || isConnected.value,
 );
 
-const connectButtonStyle = computed(() => ({
-  marginTop: "10px",
-  width: "100%",
-  padding: "8px",
-  backgroundColor: isConnectDisabled.value ? "#ccc" : "#007bff",
-  color: "white",
-  border: "none",
-  borderRadius: "5px",
-  cursor: isConnectDisabled.value ? "not-allowed" : "pointer",
-}));
-
 const handleConnect = () => {
   if (!username.value.trim()) return;
   if (getSocket()) return; // Already initialized
@@ -76,30 +65,24 @@ const handleCancelDisconnect = () => {
     <div class="chat-box">
       <h2>Chat Box</h2>
 
-      <div v-if="!isConnected" style="margin-bottom: 15px">
+      <div v-if="!isConnected" class="connect-section">
         <input
           type="text"
           placeholder="Enter your username"
           v-model="username"
           @keydown="handleKeyPress"
-          style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-          "
+          class="username-input"
         />
         <button
           @click="handleConnect"
           :disabled="isConnectDisabled"
-          :style="connectButtonStyle"
+          class="connect-button"
         >
           Connect
         </button>
       </div>
 
-      <div :class="['status-row', isConnected ? 'connected' : 'disconnected']">
+      <div class="status-row">
         <div
           class="status-badge"
           :class="isConnected ? 'connected' : 'disconnected'"
@@ -154,27 +137,27 @@ const handleCancelDisconnect = () => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .app-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f0f0f0;
+  background-color: var(--color-background);
   margin: 0;
   padding: 0;
 }
 
 .chat-box {
-  width: 400px;
-  height: 500px;
-  background-color: white;
-  border: 2px solid #333;
-  border-radius: 10px;
-  padding: 20px;
+  width: var(--chat-box-width);
+  height: var(--chat-box-height);
+  background-color: var(--color-surface);
+  border: var(--border-width-thick) solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: var(--padding-lg);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-default);
   position: relative;
 }
 
@@ -183,12 +166,32 @@ const handleCancelDisconnect = () => {
   text-align: center;
 }
 
-.chat-box input {
+.connect-section {
+  margin-bottom: 15px;
+}
+
+.username-input {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  padding: var(--padding-xs);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-sm);
   box-sizing: border-box;
+}
+
+.connect-button {
+  margin-top: 10px;
+  width: 100%;
+  padding: var(--padding-xs);
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.connect-button:disabled {
+  background-color: var(--color-disabled);
+  cursor: not-allowed;
 }
 
 .status-row {
@@ -200,36 +203,36 @@ const handleCancelDisconnect = () => {
 }
 
 .status-badge {
-  padding: 10px;
-  border-radius: 5px;
+  padding: var(--padding-sm);
+  border-radius: var(--border-radius-sm);
   text-align: center;
   font-weight: bold;
   flex: 1;
 }
 
 .status-badge.connected {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .status-badge.disconnected {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .messages-area {
   flex: 1;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 10px;
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-sm);
+  padding: var(--padding-sm);
   margin-bottom: 10px;
   overflow-y: auto;
-  background-color: #fafafa;
+  background-color: var(--color-messages-area);
 }
 
 .no-messages {
   text-align: center;
-  color: #999;
+  color: var(--color-placeholder);
   margin: 0;
 }
 
@@ -238,11 +241,11 @@ const handleCancelDisconnect = () => {
 }
 
 .disconnect-button {
-  padding: 10px 16px;
-  background-color: #dc3545;
-  color: white;
+  padding: var(--padding-sm) var(--padding-md);
+  background-color: var(--color-danger);
+  color: var(--color-text);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   white-space: nowrap;
   height: 100%;
@@ -254,7 +257,7 @@ const handleCancelDisconnect = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-modal-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -262,10 +265,10 @@ const handleCancelDisconnect = () => {
 }
 
 .modal-content {
-  background-color: white;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  padding: var(--padding-xl);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-default);
   max-width: 400px;
   width: 90%;
 }
@@ -285,20 +288,20 @@ const handleCancelDisconnect = () => {
 }
 
 .btn-cancel {
-  padding: 8px 16px;
-  background-color: #6c757d;
-  color: white;
+  padding: var(--padding-xs) var(--padding-md);
+  background-color: var(--color-secondary);
+  color: var(--color-text);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
 }
 
 .btn-confirm {
-  padding: 8px 16px;
-  background-color: #dc3545;
-  color: white;
+  padding: var(--padding-xs) var(--padding-md);
+  background-color: var(--color-danger);
+  color: var(--color-text);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
 }
 </style>
