@@ -1,0 +1,13 @@
+{
+  "name": "websockets-assignment",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run react\" \"npm run vue\"",
+    "server": "cd socketio-server && npm start",
+    "react": "cd react-socketio-app && npm run dev",
+    "vue": "cd vue-socketio-app && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
