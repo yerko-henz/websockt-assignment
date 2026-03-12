@@ -7,6 +7,7 @@ function App() {
   const [username, setUsername] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
+  const [messageInput, setMessageInput] = useState("");
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
   const handleConnect = () => {
@@ -35,9 +36,22 @@ function App() {
     });
   };
 
+  const handleSendMessage = () => {
+    if (!messageInput.trim() || !getSocket()) return;
+
+    const socket = getSocket()!;
+    const messageWithSender = `${username}: ${messageInput}`;
+    socket.emit("message", messageWithSender);
+    setMessageInput("");
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleConnect();
+      if (isConnected) {
+        handleSendMessage();
+      } else {
+        handleConnect();
+      }
     }
   };
 
@@ -101,17 +115,43 @@ function App() {
         </div>
 
         {isConnected && (
-          <div className="messages-area">
-            {messages.length === 0 ? (
-              <p className="no-messages">No messages yet</p>
-            ) : (
-              messages.map((msg, index) => (
-                <div key={index} className="message">
-                  {msg}
-                </div>
-              ))
-            )}
-          </div>
+          <>
+            <div className="messages-area">
+              {messages.length === 0 ? (
+                <p className="no-messages">No messages yet</p>
+              ) : (
+                messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`message ${msg.startsWith(`${username}:`) ? "own-message" : ""}`}
+                  >
+                    {msg.startsWith(`${username}:`) && (
+                      <span className="you-tag">(you) </span>
+                    )}
+                    {msg}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="message-input-section">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                className="message-input"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!messageInput.trim()}
+                className="send-button"
+              >
+                Send
+              </button>
+            </div>
+          </>
         )}
 
         {/* Disconnect Confirmation Modal */}

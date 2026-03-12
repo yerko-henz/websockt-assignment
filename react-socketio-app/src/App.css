@@ -111,6 +111,39 @@
   margin-bottom: 5px;
 }
 
+.you-tag {
+  font-weight: bold;
+}
+
+.message-input-section {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.message-input {
+  flex: 1;
+  padding: var(--padding-xs);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-sm);
+  box-sizing: border-box;
+}
+
+.send-button {
+  padding: var(--padding-xs) var(--padding-md);
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.send-button:disabled {
+  background-color: var(--color-disabled);
+  cursor: not-allowed;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;

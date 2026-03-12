@@ -5,6 +5,7 @@ import { initSocket, getSocket, disconnectSocket } from "./services/socket";
 const username = ref("");
 const isConnected = ref(false);
 const messages = ref<string[]>([]);
+const messageInput = ref("");
 const showDisconnectModal = ref(false);
 
 const isConnectDisabled = computed(
@@ -37,9 +38,22 @@ const handleConnect = () => {
   });
 };
 
+const handleSendMessage = () => {
+  if (!messageInput.value.trim() || !getSocket()) return;
+
+  const socket = getSocket()!;
+  const messageWithSender = `${username.value}: ${messageInput.value}`;
+  socket.emit("message", messageWithSender);
+  messageInput.value = "";
+};
+
 const handleKeyPress = (e: KeyboardEvent) => {
   if (e.key === "Enter") {
-    handleConnect();
+    if (isConnected.value) {
+      handleSendMessage();
+    } else {
+      handleConnect();
+    }
   }
 };
 
@@ -52,6 +66,7 @@ const handleConfirmDisconnect = () => {
   isConnected.value = false;
   messages.value = [];
   username.value = "";
+  messageInput.value = "";
   showDisconnectModal.value = false;
 };
 
@@ -102,17 +117,42 @@ const handleCancelDisconnect = () => {
         </button>
       </div>
 
-      <div v-if="isConnected" class="messages-area">
-        <p v-if="messages.length === 0" class="no-messages">No messages yet</p>
-        <div
-          v-else
-          v-for="(msg, index) in messages"
-          :key="index"
-          class="message"
-        >
-          {{ msg }}
+      <template v-if="isConnected">
+        <div class="messages-area">
+          <p v-if="messages.length === 0" class="no-messages">
+            No messages yet
+          </p>
+          <div
+            v-else
+            v-for="(msg, index) in messages"
+            :key="index"
+            class="message"
+            :class="{ 'own-message': msg.startsWith(username + ':') }"
+          >
+            <span v-if="msg.startsWith(username + ':')" class="you-tag"
+              >(you)
+            </span>
+            {{ msg }}
+          </div>
         </div>
-      </div>
+
+        <div class="message-input-section">
+          <input
+            type="text"
+            placeholder="Type your message..."
+            v-model="messageInput"
+            @keydown="handleKeyPress"
+            class="message-input"
+          />
+          <button
+            @click="handleSendMessage"
+            :disabled="!messageInput.trim()"
+            class="send-button"
+          >
+            Send
+          </button>
+        </div>
+      </template>
 
       <!-- Disconnect Confirmation Modal -->
       <div
@@ -240,6 +280,14 @@ const handleCancelDisconnect = () => {
   margin-bottom: 5px;
 }
 
+.message.own-message {
+  font-weight: bold;
+}
+
+.you-tag {
+  font-weight: bold;
+}
+
 .disconnect-button {
   padding: var(--padding-sm) var(--padding-md);
   background-color: var(--color-danger);
@@ -249,6 +297,35 @@ const handleCancelDisconnect = () => {
   cursor: pointer;
   white-space: nowrap;
   height: 100%;
+}
+
+.message-input-section {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.message-input {
+  flex: 1;
+  padding: var(--padding-xs);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-sm);
+  box-sizing: border-box;
+}
+
+.send-button {
+  padding: var(--padding-xs) var(--padding-md);
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.send-button:disabled {
+  background-color: var(--color-disabled);
+  cursor: not-allowed;
 }
 
 .modal-overlay {
