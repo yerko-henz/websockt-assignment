@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { initSocket, getSocket, disconnectSocket } from "./services/socket";
 
 const STORAGE_KEY = "chat_username";
+const MESSAGES_STORAGE_KEY = "chat_global_messages";
 
 const username = ref("");
 const isConnected = ref(false);
@@ -11,9 +12,15 @@ const messageInput = ref("");
 const showDisconnectModal = ref(false);
 const hasAutoConnected = ref(false);
 
-// Load stored username on mount and auto-connect if exists
+// Load stored username and messages on mount
 onMounted(() => {
   const storedUsername = localStorage.getItem(STORAGE_KEY);
+  const storedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
+
+  if (storedMessages) {
+    messages.value = JSON.parse(storedMessages);
+  }
+
   if (storedUsername) {
     username.value = storedUsername;
     if (!hasAutoConnected.value && !getSocket()) {
@@ -33,6 +40,10 @@ onMounted(() => {
       });
       socket.on("message", (data: string) => {
         messages.value.push(data);
+        localStorage.setItem(
+          MESSAGES_STORAGE_KEY,
+          JSON.stringify(messages.value),
+        );
       });
     }
   }
@@ -68,6 +79,7 @@ const handleConnect = () => {
 
   socket.on("message", (data: string) => {
     messages.value.push(data);
+    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages.value));
   });
 };
 
@@ -101,6 +113,7 @@ const handleConfirmDisconnect = () => {
   username.value = "";
   messageInput.value = "";
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(MESSAGES_STORAGE_KEY);
   showDisconnectModal.value = false;
 };
 

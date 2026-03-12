@@ -4,6 +4,7 @@ import "../../theme/theme.css";
 import "./App.css";
 
 const STORAGE_KEY = "chat_username";
+const MESSAGES_STORAGE_KEY = "chat_global_messages";
 
 function App() {
   const [username, setUsername] = useState(() => {
@@ -11,7 +12,10 @@ function App() {
     return stored || "";
   });
   const [isConnected, setIsConnected] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<string[]>(() => {
+    const stored = localStorage.getItem(MESSAGES_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  });
   const [messageInput, setMessageInput] = useState("");
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
   const hasAutoConnectedRef = useRef(false);
@@ -36,7 +40,11 @@ function App() {
           console.error("🔴 Connection error:", error);
         });
         socket.on("message", (data: string) => {
-          setMessages((prev) => [...prev, data]);
+          setMessages((prev) => {
+            const updated = [...prev, data];
+            localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(updated));
+            return updated;
+          });
         });
       }
     }
@@ -67,7 +75,11 @@ function App() {
     });
 
     socket.on("message", (data: string) => {
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => {
+        const updated = [...prev, data];
+        localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
     });
   };
 
@@ -98,6 +110,7 @@ function App() {
     disconnectSocket();
     setIsConnected(false);
     setMessages([]);
+    localStorage.removeItem(MESSAGES_STORAGE_KEY);
     setUsername("");
     localStorage.removeItem(STORAGE_KEY);
     setShowDisconnectModal(false);
