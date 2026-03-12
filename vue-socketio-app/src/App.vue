@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { initSocket, getSocket, disconnectSocket } from "./services/socket";
+import {
+  ConnectionSection,
+  StatusBadge,
+  MessagesArea,
+  MessageInput,
+  DisconnectModal,
+} from "./components";
 
 const STORAGE_KEY = "chat_username";
 const MESSAGES_STORAGE_KEY = "chat_global_messages";
@@ -127,34 +134,17 @@ const handleCancelDisconnect = () => {
     <div class="chat-box">
       <h2>Chat Box</h2>
 
-      <div v-if="!isConnected" class="connect-section">
-        <input
-          type="text"
-          placeholder="Enter your username"
-          v-model="username"
-          @keydown="handleKeyPress"
-          class="username-input"
-        />
-        <button
-          @click="handleConnect"
-          :disabled="isConnectDisabled"
-          class="connect-button"
-        >
-          Connect
-        </button>
-      </div>
+      <ConnectionSection
+        v-if="!isConnected"
+        :username="username"
+        :on-username-change="(value: string) => (username = value)"
+        :on-connect="handleConnect"
+        :disabled="isConnectDisabled"
+        :on-key-press="handleKeyPress"
+      />
 
       <div class="status-row">
-        <div
-          class="status-badge"
-          :class="isConnected ? 'connected' : 'disconnected'"
-        >
-          {{
-            isConnected
-              ? `✓ Connected as ${username}`
-              : "✗ Not connected to backend"
-          }}
-        </div>
+        <StatusBadge :is-connected="isConnected" :username="username" />
         <button
           v-if="isConnected"
           @click="handleDisconnectClick"
@@ -165,61 +155,21 @@ const handleCancelDisconnect = () => {
       </div>
 
       <template v-if="isConnected">
-        <div class="messages-area">
-          <p v-if="messages.length === 0" class="no-messages">
-            No messages yet
-          </p>
-          <div
-            v-else
-            v-for="(msg, index) in messages"
-            :key="index"
-            class="message"
-            :class="{ 'own-message': msg.startsWith(username + ':') }"
-          >
-            <span v-if="msg.startsWith(username + ':')" class="you-tag"
-              >(you)
-            </span>
-            {{ msg }}
-          </div>
-        </div>
-
-        <div class="message-input-section">
-          <input
-            type="text"
-            placeholder="Type your message..."
-            v-model="messageInput"
-            @keydown="handleKeyPress"
-            class="message-input"
-          />
-          <button
-            @click="handleSendMessage"
-            :disabled="!messageInput.trim()"
-            class="send-button"
-          >
-            Send
-          </button>
-        </div>
+        <MessagesArea :messages="messages" :current-username="username" />
+        <MessageInput
+          :value="messageInput"
+          :on-change="(value: string) => (messageInput = value)"
+          :on-send="handleSendMessage"
+          :on-key-press="handleKeyPress"
+          :disabled="!messageInput.trim()"
+        />
       </template>
 
-      <!-- Disconnect Confirmation Modal -->
-      <div
-        v-if="showDisconnectModal"
-        class="modal-overlay"
-        @click="handleCancelDisconnect"
-      >
-        <div class="modal-content" @click.stop>
-          <h3>Confirm Disconnect</h3>
-          <p>Are you sure you want to disconnect from the chat server?</p>
-          <div class="modal-buttons">
-            <button @click="handleCancelDisconnect" class="btn-cancel">
-              Cancel
-            </button>
-            <button @click="handleConfirmDisconnect" class="btn-confirm">
-              Disconnect
-            </button>
-          </div>
-        </div>
-      </div>
+      <DisconnectModal
+        :show="showDisconnectModal"
+        :on-confirm="handleConfirmDisconnect"
+        :on-cancel="handleCancelDisconnect"
+      />
     </div>
   </div>
 </template>
@@ -307,6 +257,17 @@ const handleCancelDisconnect = () => {
   color: var(--color-error-text);
 }
 
+.disconnect-button {
+  padding: var(--padding-sm) var(--padding-md);
+  background-color: var(--color-danger);
+  color: var(--color-text);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  height: 100%;
+}
+
 .messages-area {
   flex: 1;
   border: var(--border-width-thin) solid var(--color-border-light);
@@ -333,17 +294,6 @@ const handleCancelDisconnect = () => {
 
 .you-tag {
   font-weight: bold;
-}
-
-.disconnect-button {
-  padding: var(--padding-sm) var(--padding-md);
-  background-color: var(--color-danger);
-  color: var(--color-text);
-  border: none;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  height: 100%;
 }
 
 .message-input-section {

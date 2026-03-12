@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { initSocket, getSocket, disconnectSocket } from "./services/socket";
 import "../../theme/theme.css";
 import "./App.css";
+import {
+  ConnectionSection,
+  StatusBadge,
+  MessagesArea,
+  MessageInput,
+  DisconnectModal,
+} from "./components";
 
 const STORAGE_KEY = "chat_username";
 const MESSAGES_STORAGE_KEY = "chat_global_messages";
@@ -120,39 +127,25 @@ function App() {
     setShowDisconnectModal(false);
   };
 
+  const isConnectDisabled = !username.trim() || isConnected;
+
   return (
     <div className="app-container">
       <div className="chat-box">
         <h2>Chat Box</h2>
 
         {!isConnected && (
-          <div className="connect-section">
-            <input
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={handleKeyPress}
-              className="username-input"
-            />
-            <button
-              onClick={handleConnect}
-              disabled={!username.trim()}
-              className="connect-button"
-            >
-              Connect
-            </button>
-          </div>
+          <ConnectionSection
+            username={username}
+            onUsernameChange={setUsername}
+            onConnect={handleConnect}
+            disabled={isConnectDisabled}
+            onKeyPress={handleKeyPress}
+          />
         )}
 
         <div className="status-row">
-          <div
-            className={`status-badge ${isConnected ? "connected" : "disconnected"}`}
-          >
-            {isConnected
-              ? `✓ Connected as ${username}`
-              : "✗ Not connected to backend"}
-          </div>
+          <StatusBadge isConnected={isConnected} username={username} />
           {isConnected && (
             <button
               onClick={handleDisconnectClick}
@@ -165,64 +158,22 @@ function App() {
 
         {isConnected && (
           <>
-            <div className="messages-area">
-              {messages.length === 0 ? (
-                <p className="no-messages">No messages yet</p>
-              ) : (
-                messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`message ${msg.startsWith(`${username}:`) ? "own-message" : ""}`}
-                  >
-                    {msg.startsWith(`${username}:`) && (
-                      <span className="you-tag">(you) </span>
-                    )}
-                    {msg}
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="message-input-section">
-              <input
-                type="text"
-                placeholder="Type your message..."
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                className="message-input"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!messageInput.trim()}
-                className="send-button"
-              >
-                Send
-              </button>
-            </div>
+            <MessagesArea messages={messages} currentUsername={username} />
+            <MessageInput
+              value={messageInput}
+              onChange={setMessageInput}
+              onSend={handleSendMessage}
+              onKeyPress={handleKeyPress}
+              disabled={!messageInput.trim()}
+            />
           </>
         )}
 
-        {/* Disconnect Confirmation Modal */}
-        {showDisconnectModal && (
-          <div className="modal-overlay" onClick={handleCancelDisconnect}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h3>Confirm Disconnect</h3>
-              <p>Are you sure you want to disconnect from the chat server?</p>
-              <div className="modal-buttons">
-                <button onClick={handleCancelDisconnect} className="btn-cancel">
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDisconnect}
-                  className="btn-confirm"
-                >
-                  Disconnect
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <DisconnectModal
+          show={showDisconnectModal}
+          onConfirm={handleConfirmDisconnect}
+          onCancel={handleCancelDisconnect}
+        />
       </div>
     </div>
   );
