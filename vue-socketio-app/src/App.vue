@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { storeToRefs } from "pinia";
 import { initSocket, getSocket, disconnectSocket } from "./services/socket";
+import { useChatStore } from "./stores/chatStore";
 import {
   ConnectionSection,
   StatusBadge,
@@ -9,50 +11,48 @@ import {
   DisconnectModal,
 } from "./components";
 
-const STORAGE_KEY = "chat_username";
 const MESSAGES_STORAGE_KEY = "chat_global_messages";
 
-const username = ref("");
-const isConnected = ref(false);
+const chatStore = useChatStore();
+const { username, isConnected } = storeToRefs(chatStore);
+const { setIsConnected, clearStore } = chatStore;
+
 const messages = ref<string[]>([]);
 const messageInput = ref("");
 const showDisconnectModal = ref(false);
 const hasAutoConnected = ref(false);
 
-// Load stored username and messages on mount
+// Load stored messages on mount
 onMounted(() => {
-  const storedUsername = localStorage.getItem(STORAGE_KEY);
   const storedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
 
   if (storedMessages) {
     messages.value = JSON.parse(storedMessages);
   }
 
-  if (storedUsername) {
-    username.value = storedUsername;
-    if (!hasAutoConnected.value && !getSocket()) {
-      hasAutoConnected.value = true;
-      const socket = initSocket(storedUsername, "vue");
-      socket.on("connect", () => {
-        isConnected.value = true;
-        console.log("✅ Connected to backend! Socket ID:", socket.id);
-      });
-      socket.on("disconnect", () => {
-        isConnected.value = false;
-        console.log("❌ Disconnected from backend");
-      });
-      socket.on("connect_error", (error: Error) => {
-        isConnected.value = false;
-        console.error("🔴 Connection error:", error);
-      });
-      socket.on("message", (data: string) => {
-        messages.value.push(data);
-        localStorage.setItem(
-          MESSAGES_STORAGE_KEY,
-          JSON.stringify(messages.value),
-        );
-      });
-    }
+  // Auto-connect if stored username exists (handled by Pinia store initialization)
+  if (username.value && !hasAutoConnected.value && !getSocket()) {
+    hasAutoConnected.value = true;
+    const socket = initSocket(username.value, "vue");
+    socket.on("connect", () => {
+      setIsConnected(true);
+      console.log("✅ Connected to backend! Socket ID:", socket.id);
+    });
+    socket.on("disconnect", () => {
+      setIsConnected(false);
+      console.log("❌ Disconnected from backend");
+    });
+    socket.on("connect_error", (error: Error) => {
+      setIsConnected(false);
+      console.error("🔴 Connection error:", error);
+    });
+    socket.on("message", (data: string) => {
+      messages.value.push(data);
+      localStorage.setItem(
+        MESSAGES_STORAGE_KEY,
+        JSON.stringify(messages.value),
+      );
+    });
   }
 });
 
@@ -64,23 +64,20 @@ const handleConnect = () => {
   if (!username.value.trim()) return;
   if (getSocket()) return; // Already initialized
 
-  // Save username to local storage
-  localStorage.setItem(STORAGE_KEY, username.value);
-
   const socket = initSocket(username.value, "vue");
 
   socket.on("connect", () => {
-    isConnected.value = true;
+    setIsConnected(true);
     console.log("✅ Connected to backend! Socket ID:", socket.id);
   });
 
   socket.on("disconnect", () => {
-    isConnected.value = false;
+    setIsConnected(false);
     console.log("❌ Disconnected from backend");
   });
 
   socket.on("connect_error", (error: Error) => {
-    isConnected.value = false;
+    setIsConnected(false);
     console.error("🔴 Connection error:", error);
   });
 
@@ -103,7 +100,7 @@ const handleKeyPress = (e: KeyboardEvent) => {
   if (e.key === "Enter") {
     if (isConnected.value) {
       handleSendMessage();
-    } else {
+    } else if (username.value.trim()) {
       handleConnect();
     }
   }
@@ -115,11 +112,10 @@ const handleDisconnectClick = () => {
 
 const handleConfirmDisconnect = () => {
   disconnectSocket();
-  isConnected.value = false;
+  setIsConnected(false);
   messages.value = [];
-  username.value = "";
   messageInput.value = "";
-  localStorage.removeItem(STORAGE_KEY);
+  clearStore();
   localStorage.removeItem(MESSAGES_STORAGE_KEY);
   showDisconnectModal.value = false;
 };

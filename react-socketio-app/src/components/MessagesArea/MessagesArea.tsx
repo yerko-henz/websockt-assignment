@@ -1,14 +1,17 @@
 import React from "react";
+import { useChatStore } from "../../stores/chatStore";
 
-interface MessagesAreaProps {
-  messages: string[];
-  currentUsername: string;
-}
+export const MessagesArea: React.FC = () => {
+  const { username } = useChatStore();
+  const [messages, setMessages] = React.useState<string[]>([]);
 
-export const MessagesArea: React.FC<MessagesAreaProps> = ({
-  messages,
-  currentUsername,
-}) => {
+  React.useEffect(() => {
+    const stored = localStorage.getItem("chat_global_messages");
+    if (stored) {
+      setMessages(JSON.parse(stored));
+    }
+  }, []);
+
   return (
     <div className="messages-area">
       {messages.length === 0 ? (
@@ -17,9 +20,9 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
         messages.map((msg, index) => (
           <div
             key={index}
-            className={`message ${msg.startsWith(`${currentUsername}:`) ? "own-message" : ""}`}
+            className={`message ${msg.startsWith(`${username}:`) ? "own-message" : ""}`}
           >
-            {msg.startsWith(`${currentUsername}:`) && (
+            {msg.startsWith(`${username}:`) && (
               <span className="you-tag">(you) </span>
             )}
             {msg}

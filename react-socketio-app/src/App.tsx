@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { initSocket, getSocket, disconnectSocket } from "./services/socket";
+import { useChatStore } from "./stores/chatStore";
 import "../../theme/theme.css";
 import "./App.css";
 import {
@@ -10,26 +11,15 @@ import {
   DisconnectModal,
 } from "./components";
 
-const STORAGE_KEY = "chat_username";
-const MESSAGES_STORAGE_KEY = "chat_global_messages";
-
 function App() {
-  const [username, setUsername] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored || "";
-  });
-  const [isConnected, setIsConnected] = useState(false);
-  const [messages, setMessages] = useState<string[]>(() => {
-    const stored = localStorage.getItem(MESSAGES_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  });
+  const { username, isConnected, setIsConnected, clearStore } = useChatStore();
   const [messageInput, setMessageInput] = useState("");
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
   const hasAutoConnectedRef = useRef(false);
 
   // Auto-connect if stored username exists on mount
   useEffect(() => {
-    const storedUsername = localStorage.getItem(STORAGE_KEY);
+    const storedUsername = localStorage.getItem("chat_username");
     if (storedUsername && !hasAutoConnectedRef.current) {
       hasAutoConnectedRef.current = true;
       if (!getSocket()) {
@@ -47,22 +37,16 @@ function App() {
           console.error("🔴 Connection error:", error);
         });
         socket.on("message", (data: string) => {
-          setMessages((prev) => {
-            const updated = [...prev, data];
-            localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(updated));
-            return updated;
-          });
+          // MessagesArea handles its own state from localStorage
+          console.log("Received message:", data);
         });
       }
     }
-  }, []);
+  }, [setIsConnected]);
 
   const handleConnect = () => {
     if (!username.trim()) return;
     if (getSocket()) return; // Already initialized
-
-    // Save username to local storage
-    localStorage.setItem(STORAGE_KEY, username);
 
     const socket = initSocket(username, "react");
 
@@ -82,11 +66,8 @@ function App() {
     });
 
     socket.on("message", (data: string) => {
-      setMessages((prev) => {
-        const updated = [...prev, data];
-        localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
+      // MessagesArea handles its own state from localStorage
+      console.log("Received message:", data);
     });
   };
 
@@ -116,10 +97,9 @@ function App() {
   const handleConfirmDisconnect = () => {
     disconnectSocket();
     setIsConnected(false);
-    setMessages([]);
-    localStorage.removeItem(MESSAGES_STORAGE_KEY);
-    setUsername("");
-    localStorage.removeItem(STORAGE_KEY);
+    clearStore();
+    localStorage.removeItem("chat_global_messages");
+    setMessageInput("");
     setShowDisconnectModal(false);
   };
 
@@ -127,25 +107,15 @@ function App() {
     setShowDisconnectModal(false);
   };
 
-  const isConnectDisabled = !username.trim() || isConnected;
-
   return (
     <div className="app-container">
       <div className="chat-box">
         <h2>Chat Box</h2>
 
-        {!isConnected && (
-          <ConnectionSection
-            username={username}
-            onUsernameChange={setUsername}
-            onConnect={handleConnect}
-            disabled={isConnectDisabled}
-            onKeyPress={handleKeyPress}
-          />
-        )}
+        {!isConnected && <ConnectionSection />}
 
         <div className="status-row">
-          <StatusBadge isConnected={isConnected} username={username} />
+          <StatusBadge />
           {isConnected && (
             <button
               onClick={handleDisconnectClick}
@@ -158,7 +128,7 @@ function App() {
 
         {isConnected && (
           <>
-            <MessagesArea messages={messages} currentUsername={username} />
+            <MessagesArea />
             <MessageInput
               value={messageInput}
               onChange={setMessageInput}

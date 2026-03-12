@@ -1,33 +1,31 @@
 import React from "react";
+import { useChatStore } from "../../stores/chatStore";
 
-interface ConnectionSectionProps {
-  username: string;
-  onUsernameChange: (value: string) => void;
-  onConnect: () => void;
-  disabled: boolean;
-  onKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-}
+export const ConnectionSection: React.FC = () => {
+  const { username, setUsername } = useChatStore();
+  const [localUsername, setLocalUsername] = React.useState(username);
 
-export const ConnectionSection: React.FC<ConnectionSectionProps> = ({
-  username,
-  onUsernameChange,
-  onConnect,
-  disabled,
-  onKeyPress,
-}) => {
+  const handleUsernameChange = (value: string) => {
+    setLocalUsername(value);
+    setUsername(value);
+  };
+
   return (
     <div className="connect-section">
       <input
         type="text"
         placeholder="Enter your username"
-        value={username}
-        onChange={(e) => onUsernameChange(e.target.value)}
-        onKeyDown={onKeyPress}
+        value={localUsername}
+        onChange={(e) => handleUsernameChange(e.target.value)}
         className="username-input"
       />
       <button
-        onClick={onConnect}
-        disabled={disabled}
+        onClick={() => {
+          if (localUsername.trim()) {
+            setUsername(localUsername.trim());
+          }
+        }}
+        disabled={!localUsername.trim()}
         className="connect-button"
       >
         Connect

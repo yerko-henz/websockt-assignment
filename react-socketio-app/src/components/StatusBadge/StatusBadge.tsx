@@ -1,14 +1,9 @@
 import React from "react";
+import { useChatStore } from "../../stores/chatStore";
 
-interface StatusBadgeProps {
-  isConnected: boolean;
-  username: string;
-}
+export const StatusBadge: React.FC = () => {
+  const { isConnected, username } = useChatStore();
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({
-  isConnected,
-  username,
-}) => {
   return (
     <div
       className={`status-badge ${isConnected ? "connected" : "disconnected"}`}
